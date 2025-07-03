@@ -15,11 +15,11 @@ mongoose
   .then(() => console.log("Worker connected to MongoDB"))
   .catch((err) => console.error("Worker DB connection error:", err));
 
-console.log("processing job from queue");
+console.log("✅ Worker is processing jobs...");
+
 jobQueue.process(async (job) => {
   const { job: jobData, sourceUrl, totalCount, isLast } = job.data;
-  const jobId =
-    jobData.guid?._ || jobData.link || jobData.id || Math.random().toString();
+  const jobId = jobData.guid?._ || jobData.link || jobData.id || Math.random().toString();
 
   if (!importStats.has(sourceUrl)) {
     importStats.set(sourceUrl, {
@@ -27,26 +27,11 @@ jobQueue.process(async (job) => {
       totalImported: 0,
       newJobs: 0,
       updatedJobs: 0,
-      failedJobs: [],
+      failedJobs: []
     });
   }
 
-  if (isLast) {
-    await ImportLog.create({
-      timestamp: new Date(),
-      sourceUrl,
-      totalFetched: stats.totalFetched,
-      totalImported: stats.totalImported,
-      newJobs: stats.newJobs,
-      updatedJobs: stats.updatedJobs,
-      failedJobs: stats.failedJobs,
-    });
-
-    console.log(`📝 Saved import log for ${sourceUrl}`);
-    importStats.delete(sourceUrl); // Clean up memory
-  }
-
-  const stats = importStats.get(sourceUrl);
+  const stats = importStats.get(sourceUrl); // ✅ Now correctly defined above
 
   try {
     const existing = await Job.findOne({ jobId });
@@ -63,7 +48,7 @@ jobQueue.process(async (job) => {
           postedAt: new Date(jobData.pubDate),
           category: jobData.category || "",
           type: jobData["job:type"] || "",
-          rawData: jobData,
+          rawData: jobData
         }
       );
       stats.updatedJobs++;
@@ -78,7 +63,7 @@ jobQueue.process(async (job) => {
         postedAt: new Date(jobData.pubDate),
         category: jobData.category || "",
         type: jobData["job:type"] || "",
-        rawData: jobData,
+        rawData: jobData
       });
       stats.newJobs++;
     }
@@ -87,11 +72,22 @@ jobQueue.process(async (job) => {
   } catch (err) {
     stats.failedJobs.push({
       reason: err.message,
-      jobData,
+      jobData
     });
   }
 
-  // Save log to DB
-  await ImportLog.create(importLog);
-  console.log("Import log saved ", importLog);
+  if (isLast) {
+    await ImportLog.create({
+      timestamp: new Date(),
+      sourceUrl,
+      totalFetched: stats.totalFetched,
+      totalImported: stats.totalImported,
+      newJobs: stats.newJobs,
+      updatedJobs: stats.updatedJobs,
+      failedJobs: stats.failedJobs
+    });
+
+    console.log(`📝 Import log saved for ${sourceUrl}`);
+    importStats.delete(sourceUrl);
+  }
 });

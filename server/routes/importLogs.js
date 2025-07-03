@@ -9,7 +9,7 @@ router.get("/", async (req, res) => {
       .sort({
         timeStamp: -1,
       })
-      .limit(500);
+      .limit(100);
     res.json(log);
   } catch (error) {
     console.error("error in fetching logs", error.message);

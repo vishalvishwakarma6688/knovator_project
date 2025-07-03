@@ -8,7 +8,22 @@ const cors = require("cors");
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: 'https://knovator-project.vercel.app' })); // no trailing slash
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://knovator-project.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed from this origin: ' + origin));
+    }
+  }
+}));
+
+
 app.use(express.json());
 
 mongoose

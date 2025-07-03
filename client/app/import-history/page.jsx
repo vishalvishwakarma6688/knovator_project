@@ -13,8 +13,9 @@ export default function ImportHistoryPage() {
 
     async function fetchLogs() {
       try {
-        const res = await fetch("https://knovator-backend-8zd9.onrender.com/");
+        const res = await fetch("https://knovator-backend-8zd9.onrender.com/api/import-logs");
         const data = await res.json();
+        console.log("Data from API ",data)
         console.log("Fetched data ", data);
         setLogs(data);
       } catch (err) {
