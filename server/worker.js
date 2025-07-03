@@ -17,9 +17,25 @@ mongoose
 
 console.log("✅ Worker is processing jobs...");
 
-jobQueue.process(async (job) => {
+// ✅ SETUP LOG LISTENERS FIRST (before processing begins)
+jobQueue.on("waiting", (jobId) => {
+  console.log(`👀 Worker sees waiting job: ${jobId}`);
+});
+
+jobQueue.on("active", (job) => {
+  console.log(`⚙️ Worker started job: ${job.id}`);
+});
+
+jobQueue.on("completed", (job) => {
+  console.log(`✅ Worker completed job: ${job.id}`);
+});
+
+// ✅ THEN DEFINE THE PROCESSOR
+jobQueue.process('import-job',async (job) => {
+  // const { job: jobData, sourceUrl, totalCount, isLast } = job.data;
   const { job: jobData, sourceUrl, totalCount, isLast } = job.data;
-  const jobId = jobData.guid?._ || jobData.link || jobData.id || Math.random().toString();
+  const jobId =
+    jobData.guid?._ || jobData.link || jobData.id || Math.random().toString();
 
   if (!importStats.has(sourceUrl)) {
     importStats.set(sourceUrl, {
@@ -27,11 +43,11 @@ jobQueue.process(async (job) => {
       totalImported: 0,
       newJobs: 0,
       updatedJobs: 0,
-      failedJobs: []
+      failedJobs: [],
     });
   }
 
-  const stats = importStats.get(sourceUrl); // ✅ Now correctly defined above
+  const stats = importStats.get(sourceUrl);
 
   try {
     const existing = await Job.findOne({ jobId });
@@ -48,9 +64,10 @@ jobQueue.process(async (job) => {
           postedAt: new Date(jobData.pubDate),
           category: jobData.category || "",
           type: jobData["job:type"] || "",
-          rawData: jobData
+          rawData: jobData,
         }
       );
+      console.log(`♻️ Existing job updated for: ${jobId}`);
       stats.updatedJobs++;
     } else {
       await Job.create({
@@ -63,17 +80,19 @@ jobQueue.process(async (job) => {
         postedAt: new Date(jobData.pubDate),
         category: jobData.category || "",
         type: jobData["job:type"] || "",
-        rawData: jobData
+        rawData: jobData,
       });
       stats.newJobs++;
     }
 
     stats.totalImported++;
+    console.log(`🆕 New job inserted for: ${jobId}`);
   } catch (err) {
     stats.failedJobs.push({
       reason: err.message,
-      jobData
+      jobData,
     });
+    console.error(`❌ Failed to insert/update job ${jobId}: ${err.message}`);
   }
 
   if (isLast) {
@@ -84,10 +103,10 @@ jobQueue.process(async (job) => {
       totalImported: stats.totalImported,
       newJobs: stats.newJobs,
       updatedJobs: stats.updatedJobs,
-      failedJobs: stats.failedJobs
+      failedJobs: stats.failedJobs,
     });
-
-    console.log(`📝 Import log saved for ${sourceUrl}`);
+    console.log(`🟡 Last job detected for: ${sourceUrl}`);
+    console.log(`✅ Import log saved for: ${sourceUrl}`);
     importStats.delete(sourceUrl);
   }
 });
