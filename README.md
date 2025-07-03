@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Artha Job Importer – Full Stack (MERN) Assignment
 
-## Getting Started
+This project is a **scalable job importing system** built with the MERN stack. It fetches job listings from multiple external XML APIs, queues them using Redis and Bull, imports them into MongoDB, and provides a web UI to view import history and track job sync operations.
 
-First, run the development server:
+---
+
+## Features
+
+- ✅ Fetch jobs from multiple external **XML job feeds**
+- ✅ Convert XML to JSON using `xml2js`
+- ✅ Queue jobs using **Bull + Redis** for background processing
+- ✅ Import/update jobs in MongoDB using **Mongoose**
+- ✅ Track detailed **import history logs**
+- ✅ View import logs in a clean **Next.js (App Router)** Admin UI
+- ✅ Hourly job sync via `setInterval`
+- ✅ Clean, modular code with separation of concerns
+
+---
+
+## Tech Stack
+
+| Layer       | Tech                         |
+|-------------|------------------------------|
+| Frontend    | Next.js (App Router)         |
+| Backend     | Express.js (Node.js)         |
+| Database    | MongoDB + Mongoose           |
+| Queue       | Bull + Redis                 |
+| XML Parser  | xml2js                       |
+| Styling     | Tailwind CSS                 |
+| Logging     | MongoDB `import_logs`        |
+
+---
+
+├── client # Frontend (Next.js)
+│ └── app/import-history/page.js
+├── server # Backend (Express.js)
+│ ├── models # Mongoose schemas
+│ ├── services # XML fetch + parsing
+│ ├── queues # Bull job queue
+│ ├── routes # API endpoints
+│ ├── index.js # Starts API + fetch logic
+│ └── worker.js # Background job processor
+├── docs/architecture.md
+└── README.md
+
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the repo
 
 ```bash
+git clone https://github.com/your-username/artha-job-importer.git
+cd artha-job-importer
+
+
+## Project Structure
+
+
+## Backend Setup
+cd server
+npm install
+
+## Backend Setup create .env file
+MONGO_URI=mongodb://localhost:27017/artha-job-board
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+## start server
+node index.js  # Runs server and schedules hourly fetch
+
+## Start Worker Process
+cd server
+node worker.js
+
+
+## Frontend Setup
+cd client
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Visit: http://localhost:3000/import-history
