@@ -1,14 +1,14 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const fetchAndQueueJobs = require("./services/jobFetcher")
-const importLogsRoute = require("./routes/importLogs")
+const fetchAndQueueJobs = require("./services/jobFetcher");
+const importLogsRoute = require("./routes/importLogs");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: 'https://knovator-project.vercel.app/' }));
+app.use(cors({ origin: 'https://knovator-project.vercel.app' })); // no trailing slash
 app.use(express.json());
 
 mongoose
@@ -17,7 +17,10 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => console.log("Connected to mongodb"))
-  .catch((err) => console.errpr("Mongodb connection error", err));
+  .catch((err) => console.error("Mongodb connection error", err));
+
+// ✅ Mount route BEFORE starting the server
+app.use("/api/import-logs", importLogsRoute);
 
 app.get("/", (req, res) => {
   res.send("Hello world");
@@ -25,14 +28,11 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("Serving is running on port ", PORT);
+  console.log("Server is running on port", PORT);
 });
 
 fetchAndQueueJobs();
-
-setInterval(()=>{
-  console.log("Hourly Fetch Triggered")
-  fetchAndQueueJobs()
-}, 60 * 60 * 1000)
-
-app.use("/api/import-logs", importLogsRoute)
+setInterval(() => {
+  console.log("Hourly Fetch Triggered");
+  fetchAndQueueJobs();
+}, 60 * 60 * 1000);
